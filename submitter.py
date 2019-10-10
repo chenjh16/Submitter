@@ -5,6 +5,7 @@ from splinter import Browser
 class Submitter:
 
     def __init__(self, url, username, password, course_id, homework_id, submit_list):
+        self._callback = None
         self._browser = Browser()
         self._url = url
         self._username = username
@@ -40,10 +41,14 @@ class Submitter:
         self._browser.back()
         self._browser.back()
 
+    def add_single_task_callback(self, callback):
+        self._callback = callback
+
     def start(self):
         self._login()
         self._nvi2course()
         self._nvi2homework()
         for stu_id, grade, comment, ex_file in self._submit_list:
-            # submit(stu_id, grade, comment, ex_file)
-            print('Submitted!', stu_id, grade, comment, ex_file)
+            self._submit(stu_id, grade, comment, ex_file)
+            self._callback([stu_id, grade, comment, ex_file])
+        self._browser.quit()

@@ -38,19 +38,25 @@ def get_submit_list():
     fail_list = []
     file_dir = sys.argv[1]
     for item in os.listdir(file_dir):
+        if 'Submitted' in item:
+            continue
         stu_id = item[:10]
         if stu_id.isalnum():
-            grade = "0.0"
             exfile = ""
             comment = '非PDF文件不予批阅，请补交PDF文件作业！'
             if os.path.splitext(item)[1] == '.pdf':
                 exfile = file_dir + '/' + item
                 comment = '详见附件！'
                 grade = get_grade_from_pdf_file(exfile)
-            if grade == "":
-                fail_list.append((stu_id, grade, comment, exfile))
+                if grade == "":
+                    grade = get_grade_from_filename(item)
+                if grade == "":
+                    fail_list.append((stu_id, grade, comment, exfile))
+                else:
+                    exfile = rename_file_with_grade(exfile, grade)
+                    submit_list.append((stu_id, grade, comment, exfile))
             else:
-                submit_list.append((stu_id, grade, comment, exfile))
+                submit_list.append((stu_id, "0.0", comment, exfile))
     return submit_list, fail_list
 
 
@@ -63,6 +69,18 @@ def get_submit_info():
     file_dir = sys.argv[1]
     identifiers = os.path.basename(file_dir).split('_')
     return identifiers[0], identifiers[-1]
+
+
+def single_task_callback(list):
+    print("Submitted!", list)
+    file = list[-1]
+    if os.path.isfile(file):
+        filedir = os.path.dirname(file)
+        filename = os.path.basename(file)
+        fns = filename.split('_')
+        fns.insert(2, 'Submitted')
+        new_file = os.path.join(filedir, '_'.join(fns))
+        os.rename(file, new_file)
 
 
 def get_grade_from_pdf_file(pdf_file):
@@ -84,6 +102,33 @@ def get_grade_from_pdf_file(pdf_file):
     except:
         pass
     return ""
+
+
+def get_grade_from_filename(filename):
+    """
+    The file name always begin with student ID, s.t. 2015012065, 
+    and then we should append a grade, like '_9.5_', to the student ID.
+    """
+    names = filename.split('_')
+    grade = ""
+    if len(names) >= 2:
+        grade = names[1]
+    if is_grade(grade):
+        return grade
+    return ""
+
+
+def rename_file_with_grade(file, grade):
+    filedir = os.path.dirname(file)
+    filename = os.path.basename(file)
+    fns = filename.split('_')
+    if len(fns) >= 2 and is_grade(fns[1]):
+        fns[1] = grade
+    else:
+        fns.insert(1, grade)
+    new_file = os.path.join(filedir, '_'.join(fns))
+    os.rename(file, new_file)
+    return new_file
 
 
 def is_grade(num):
@@ -113,6 +158,7 @@ def main():
         url, username, password = get_tutor_info()
         course_id, homework_id = get_submit_info()
         submitter = Submitter(url, username, password, course_id, homework_id, submit_list)
+        submitter.add_single_task_callback(single_task_callback)
         submitter.start()
 
 
