@@ -37,6 +37,8 @@ class Submitter:
             self._browser.driver.find_element_by_name('fileupload').send_keys(ex_file)
         submit_btn_css = 'div[class="sub-back sub-back-3 absolute"] > input[class="btn"]'
         self._browser.find_by_css(submit_btn_css).first.click()
+        while not self._browser.is_text_present('关闭', wait_time=1):
+            pass
         self._browser.find_by_text('关闭').click()
         self._browser.back()
         self._browser.back()
