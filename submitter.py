@@ -1,6 +1,6 @@
 
+import os
 from splinter import Browser
-
 
 class Submitter:
 
@@ -33,7 +33,7 @@ class Submitter:
         self._browser.find_by_xpath(xpath_str).last.click()
         self._browser.fill('cj', grade)
         self._browser.fill('pynr', comment)
-        if ex_file != "":
+        if os.path.splitext(ex_file)[1] == '.pdf':
             self._browser.driver.find_element_by_name('fileupload').send_keys(ex_file)
         submit_btn_css = 'div[class="sub-back sub-back-3 absolute"] > input[class="btn"]'
         self._browser.find_by_css(submit_btn_css).first.click()
@@ -54,3 +54,7 @@ class Submitter:
             self._submit(stu_id, grade, comment, ex_file)
             self._callback([stu_id, grade, comment, ex_file])
         self._browser.quit()
+
+    def clean(self):
+        work_dir = os.getcwd()
+        os.remove(work_dir + "/geckodriver.log")

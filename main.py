@@ -36,16 +36,17 @@ def get_submit_list():
     """
     submit_list = []
     fail_list = []
-    file_dir = sys.argv[1]
+    file_dir = os.path.abspath(sys.argv[1])
+    print(file_dir)
     for item in os.listdir(file_dir):
         if 'Submitted' in item:
             continue
+        if 'log' in item:
+            continue
         stu_id = item[:10]
         if stu_id.isalnum():
-            exfile = ""
-            comment = '非PDF文件不予批阅，请补交PDF文件作业！'
+            exfile = file_dir + '/' + item
             if os.path.splitext(item)[1] == '.pdf':
-                exfile = file_dir + '/' + item
                 comment = '详见附件！'
                 grade = get_grade_from_pdf_file(exfile)
                 if grade == "":
@@ -56,6 +57,7 @@ def get_submit_list():
                     exfile = rename_file_with_grade(exfile, grade)
                     submit_list.append((stu_id, grade, comment, exfile))
             else:
+                comment = '非PDF文件不予批阅，请补交PDF文件作业！'
                 submit_list.append((stu_id, "0.0", comment, exfile))
     return submit_list, fail_list
 
@@ -148,9 +150,9 @@ def print_list(plist):
 def main():
     print('Process the files ...')
     submit_list, fail_list = get_submit_list()
-    print('\nSubmit list: ')
+    print('\nSubmit list: ' + str(len(submit_list)))
     print_list(submit_list)
-    print('\nFail list: ')
+    print('\nFail list: ' + str(len(fail_list)))
     print_list(fail_list)
     run = input('\nInput Y to begin submit now: ')
     if run == 'Y':
@@ -160,6 +162,7 @@ def main():
         submitter = Submitter(url, username, password, course_id, homework_id, submit_list)
         submitter.add_single_task_callback(single_task_callback)
         submitter.start()
+        submitter.clean()
 
 
 if __name__ == "__main__":
