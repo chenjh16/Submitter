@@ -2,6 +2,7 @@
 import os
 from splinter import Browser
 
+
 class Submitter:
 
     def __init__(self, url, username, password, course_id, homework_id, submit_list):
@@ -55,6 +56,7 @@ class Submitter:
             self._callback([stu_id, grade, comment, ex_file])
         self._browser.quit()
 
-    def clean(self):
+    @staticmethod
+    def clean():
         work_dir = os.getcwd()
         os.remove(work_dir + "/geckodriver.log")
